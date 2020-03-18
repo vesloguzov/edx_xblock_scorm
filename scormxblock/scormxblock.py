@@ -211,7 +211,7 @@ class ScormXBlock(XBlock):
                 self.publish_grade()
                 context.update({"lesson_score": self.lesson_score})
         elif name in ['cmi.core.score.raw', 'cmi.score.raw'] and self.has_score:
-            self.lesson_score = int(data.get('value', 0))/100.0
+            self.lesson_score = float(int(data.get('value', 0))/100.0)
             self.publish_grade()
             context.update({"lesson_score": self.lesson_score})
         else:
@@ -235,8 +235,8 @@ class ScormXBlock(XBlock):
                 self,
                 'grade',
                 {
-                    'value': self.lesson_score,
-                    'max_value': self.weight,
+                    'value': float(self.lesson_score),
+                    'max_value': float(self.weight),
                 })
 
     def max_score(self):
