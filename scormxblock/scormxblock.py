@@ -1,26 +1,23 @@
-import json
 import hashlib
-import re
-import os
+import json
 import logging
-import pkg_resources
+import os
+import re
 import shutil
 import xml.etree.ElementTree as ET
-
 from functools import partial
+
+import pkg_resources
 from django.conf import settings
 from django.core.files import File
 from django.core.files.storage import default_storage
 from django.template import Context, Template
 from django.utils import timezone
-from webob import Response
 from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
-
+from webob import Response
 from xblock.core import XBlock
-from xblock.fields import Scope, String, Float, Boolean, Dict, DateTime, Integer
+from xblock.fields import Scope, String, Float, Dict, DateTime, Integer
 from xblock.fragment import Fragment
-
-
 
 # Make '_' a no-op so we can scrape strings
 _ = lambda text: text
@@ -74,7 +71,7 @@ class ScormXBlock(XBlock):
         scope=Scope.user_state,
         default=0
     )
-    weight = Float(
+    weight = Integer(
         default=1,
         scope=Scope.settings
     )
@@ -216,7 +213,7 @@ class ScormXBlock(XBlock):
             self.publish_grade()
             context.update({"lesson_score": self.lesson_score})
         elif name in ['cmi.core.score.raw', 'cmi.score.raw']:
-            self.lesson_score = float(int(data.get('value', 0))/100.0)
+            self.lesson_score = float(int(data.get('value', 0)) / 100.0)
             self.publish_grade()
             context.update({"lesson_score": self.lesson_score})
         else:
@@ -226,6 +223,9 @@ class ScormXBlock(XBlock):
         return context
 
     def publish_grade(self):
+
+        log.warning("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        log.warning(float(self.lesson_score))
         if self.lesson_status == 'failed' or (self.version_scorm == 'SCORM_2004'
                                               and self.success_status in ['failed', 'unknown']):
             self.runtime.publish(
@@ -241,7 +241,7 @@ class ScormXBlock(XBlock):
                 'grade',
                 {
                     'value': float(self.lesson_score),
-                    'max_value': float(self.weight),
+                    'max_value': self.weight,
                 })
 
     def max_score(self):
@@ -290,7 +290,8 @@ class ScormXBlock(XBlock):
             pass
         else:
             namespace = ''
-            for node in [node for _, node in ET.iterparse('{}/imsmanifest.xml'.format(path_to_file), events=['start-ns'])]:
+            for node in [node for _, node in
+                         ET.iterparse('{}/imsmanifest.xml'.format(path_to_file), events=['start-ns'])]:
                 if node[0] == '':
                     namespace = node[1]
                     break
