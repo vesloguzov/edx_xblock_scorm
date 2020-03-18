@@ -32,6 +32,9 @@ SCORM_URL = os.path.join(settings.MEDIA_URL, 'scorm')
 
 
 class ScormXBlock(XBlock):
+    graded = True
+    has_score = True
+    icon_class = 'problem'
 
     display_name = String(
         display_name=_("Display Name"),
@@ -75,12 +78,12 @@ class ScormXBlock(XBlock):
         default=1,
         scope=Scope.settings
     )
-    has_score = Boolean(
-        display_name=_("Scored"),
-        help=_("Select False if this component will not receive a numerical score from the Scorm"),
-        default=True,
-        scope=Scope.settings
-    )
+    # has_score = Boolean(
+    #     display_name=_("Scored"),
+    #     help=_("Select False if this component will not receive a numerical score from the Scorm"),
+    #     default=True,
+    #     scope=Scope.settings
+    # )
     icon_class = String(
         default="video",
         scope=Scope.settings,
@@ -135,8 +138,10 @@ class ScormXBlock(XBlock):
         self.display_name = request.params['display_name']
         self.width = request.params['width']
         self.height = request.params['height']
-        self.has_score = request.params['has_score']
-        self.icon_class = 'problem' if self.has_score == 'True' else 'video'
+        # self.has_score = request.params['has_score']
+        self.icon_class = 'problem'
+
+        # if self.has_score == 'True' else 'video'
 
         if hasattr(request.params['file'], 'file'):
             scorm_file = request.params['file'].file
@@ -199,18 +204,18 @@ class ScormXBlock(XBlock):
 
         if name in ['cmi.core.lesson_status', 'cmi.completion_status']:
             self.lesson_status = data.get('value')
-            if self.has_score and data.get('value') in ['completed', 'failed', 'passed']:
+            # if self.has_score and data.get('value') in ['completed', 'failed', 'passed']:
+            if data.get('value') in ['completed', 'failed', 'passed']:
                 self.publish_grade()
                 context.update({"lesson_score": self.lesson_score})
 
         elif name == 'cmi.success_status':
             self.success_status = data.get('value')
-            if self.has_score:
-                if self.success_status == 'unknown':
-                    self.lesson_score = 0
-                self.publish_grade()
-                context.update({"lesson_score": self.lesson_score})
-        elif name in ['cmi.core.score.raw', 'cmi.score.raw'] and self.has_score:
+            if self.success_status == 'unknown':
+                self.lesson_score = 0
+            self.publish_grade()
+            context.update({"lesson_score": self.lesson_score})
+        elif name in ['cmi.core.score.raw', 'cmi.score.raw']:
             self.lesson_score = float(int(data.get('value', 0))/100.0)
             self.publish_grade()
             context.update({"lesson_score": self.lesson_score})
@@ -243,13 +248,13 @@ class ScormXBlock(XBlock):
         """
         Return the maximum score possible.
         """
-        return self.weight if self.has_score else None
+        return self.weight
 
     def get_context_studio(self):
         return {
             'field_display_name': self.fields['display_name'],
             'field_scorm_file': self.fields['scorm_file'],
-            'field_has_score': self.fields['has_score'],
+            # 'field_has_score': self.fields['has_score'],
             'field_width': self.fields['width'],
             'field_height': self.fields['height'],
             'scorm_xblock': self
